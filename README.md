@@ -58,8 +58,28 @@ Khi hoàn thiện bài, benchmark nên cho các cột sau:
 
 Điểm quan trọng nhất của track này là:
 
-- ở hội thoại ngắn, `Advanced` có thể tốn hơn `Baseline` về token usage
-- ở hội thoại rất dài, compact memory nên giúp `Advanced` xử lý ngữ cảnh hiệu quả hơn đáng kể + tiết kiệm usage.
+- ở hội thoại ngắn (offline/heuristic), `Advanced` có thể tốn hơn `Baseline` về prompt tokens vì overhead User.md chưa được bù bởi compaction
+- ở hội thoại dài hoặc với live LLM, compact memory giúp `Advanced` giảm đáng kể prompt tokens (O(K) thay vì O(N²)) và recall tăng rõ rệt nhờ User.md
+
+## Bonus — Confidence Threshold
+
+`extract_profile_updates()` gán điểm confidence cho mỗi fact được trích xuất:
+
+| Khoảng | Ý nghĩa | Ví dụ |
+|--------|---------|-------|
+| 0.92–0.95 | Khai báo tường minh | "mình tên là Bảo", "đồ uống yêu thích là cà phê" |
+| 0.80–0.88 | Sửa lỗi / cập nhật | "giờ mình đang ở Huế", "chuyển sang ML engineer" |
+| 0.70–0.78 | Tuyên bố chung | "mình ở Đà Nẵng", "mình là developer" |
+| 0.50 | Ngầm định | "Python" xuất hiện trong câu bình thường |
+
+Cấu hình qua `CONFIDENCE_THRESHOLD` (mặc định `0.6`):
+- `0.6`: lọc implicit interests, giữ tất cả explicit — cân bằng recall/precision
+- `0.85`: strict — chỉ explicit declarations và corrections
+- `0.0`: không lọc — dùng cho test / offline
+
+**Vấn đề giải quyết**: ngăn câu đùa và ngữ cảnh mơ hồ làm ô nhiễm User.md  
+**Cải thiện**: recall tăng vì User.md chứa ít false positive hơn  
+**Rủi ro**: threshold quá cao → bỏ sót facts thật sự; cần tune theo dataset
 
 ## Cách dùng repo này
 
